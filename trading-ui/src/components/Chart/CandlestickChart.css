@@ -1,0 +1,105 @@
+.chart-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #0f0f0f;
+  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
+}
+
+.chart-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  border-bottom: 1px solid #2a2a2a;
+  background: #141414;
+  height: 41px;
+  flex-shrink: 0;
+}
+
+.chart-symbol {
+  font-size: 14px;
+  font-weight: 600;
+  color: #d1d4dc;
+}
+
+.chart-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #555;
+  z-index: 10;
+}
+
+.chart-canvas {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  position: relative;
+}
+
+.chart-intervals {
+  display: flex;
+  gap: 4px;
+  margin-left: 8px;
+}
+
+.interval-btn {
+  background: none;
+  border: 1px solid #2a2a2a;
+  color: #555;
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: all 0.1s;
+}
+
+.interval-btn:hover {
+  border-color: #444;
+  color: #d1d4dc;
+}
+
+.interval-btn.active {
+  background: #1e2a3a;
+  border-color: #2962ff;
+  color: #2962ff;
+}
+
+.chart-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #555;
+  font-size: 13px;
+  background: #0f0f0f;
+  z-index: 5;
+}
+
+.chart-overlay.error {
+  color: #ef5350;
+}
+
+.chart-ohlc-bar {
+  display: flex;
+  gap: 16px;
+  padding: 4px 16px;
+  background: #141414;
+  border-bottom: 1px solid #1e1e1e;
+  font-size: 11px;
+  color: #555;
+  flex-shrink: 0;
+}
+
+.ohlc-val {
+  color: #d1d4dc;
+  font-variant-numeric: tabular-nums;
+}
+
+.ohlc-val.up   { color: #26a69a; }
+.ohlc-val.down { color: #ef5350; }

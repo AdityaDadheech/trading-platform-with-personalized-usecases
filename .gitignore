@@ -1,0 +1,30 @@
+# Maven
+target/
+*.class
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Credentials - NEVER COMMIT THESE
+application-dev.yml
+application-prod.yml
+*.env
+.env.*
+
+# Kite SDK jar (install locally via README instructions)
+libs/
+
+# Node / React
+trading-ui/node_modules/
+trading-ui/dist/
+trading-ui/.env
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db

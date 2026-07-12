@@ -1,0 +1,85 @@
+spring:
+  application:
+    name: trading-market-api
+
+  # ── Database (TimescaleDB = PostgreSQL) ───────────────────────────
+  datasource:
+    url: jdbc:postgresql://localhost:5432/tradingdb
+    username: trading
+    password: trading123
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+
+  jpa:
+    hibernate:
+      ddl-auto: none              # init-db.sql owns the schema via Docker init
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  # ── Redis ─────────────────────────────────────────────────────────
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 4
+
+  # ── Kafka ─────────────────────────────────────────────────────────
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all                   # wait for all replicas to confirm
+      retries: 3
+    consumer:
+      group-id: trading-market-api
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.trading.common.dto"
+
+  # ── Jackson ───────────────────────────────────────────────────────
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+    default-property-inclusion: non_null
+
+# ── Server ────────────────────────────────────────────────────────
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+# ── Kite Connect ─────────────────────────────────────────────────
+# Real values come from application-dev.yml (gitignored)
+kite:
+  api-key: ${KITE_API_KEY:placeholder}
+  api-secret: ${KITE_API_SECRET:placeholder}
+  redirect-url: http://localhost:8080/api/v1/auth/callback
+  default-subscriptions:
+    - 256265    # NIFTY 50
+  websocket:
+    reconnect-max-retries: 5
+    reconnect-interval-ms: 3000
+
+# ── Logging ───────────────────────────────────────────────────────
+logging:
+  level:
+    com.trading: INFO
+    org.springframework.web: WARN
+    org.hibernate.SQL: WARN
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

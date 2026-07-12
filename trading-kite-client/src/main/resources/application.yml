@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: trading-platform
+
+  # Redis - for storing access token across restarts
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000ms
+
+# ─── Kite Connect ─────────────────────────────────────────────────────────────
+kite:
+  # REQUIRED: Set these in application-dev.yml (never commit real values)
+  api-key: ${KITE_API_KEY:your_api_key_here}
+  api-secret: ${KITE_API_SECRET:your_api_secret_here}
+
+  # Where Kite redirects after login - must match your Kite app settings exactly
+  redirect-url: http://localhost:8080/api/v1/auth/callback
+
+  # Optional: set this after running the auth flow once (saves re-login on restart)
+  # access-token: paste_your_access_token_here_in_dev_yml
+
+  # Instrument tokens to subscribe to on WebSocket connect
+  # Find tokens via GET /api/v1/instruments?symbol=RELIANCE&exchange=NSE
+  # Common tokens: 256265=NIFTY50, 260105=BANKNIFTY, 408065=RELIANCE, 738561=INFY
+  default-subscriptions:
+    - 256265   # NIFTY 50 index
+
+  websocket:
+    reconnect-max-retries: 5
+    reconnect-interval-ms: 3000
+    max-subscriptions: 3000
+
+  debug: false
+
+# ─── Logging ──────────────────────────────────────────────────────────────────
+logging:
+  level:
+    com.trading: INFO
+    com.zerodhatech: WARN      # set to DEBUG to see raw Kite SDK logs
+    org.springframework.web: WARN
