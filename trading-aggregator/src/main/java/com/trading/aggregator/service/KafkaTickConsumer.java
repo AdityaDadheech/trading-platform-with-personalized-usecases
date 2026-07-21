@@ -3,6 +3,7 @@ package com.trading.aggregator.service;
 import com.trading.common.constants.KafkaTopics;
 import com.trading.common.dto.TickDto;
 import com.trading.common.enums.Interval;
+import com.trading.kite.service.InstrumentRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -37,6 +38,7 @@ import org.springframework.stereotype.Service;
 public class KafkaTickConsumer {
 
     private final CandleBuilderService candleBuilderService;
+    private final InstrumentRegistry instrumentRegistry;
 
     /**
      * Called for every tick message on the trading.ticks topic.
@@ -56,6 +58,16 @@ public class KafkaTickConsumer {
     )
     public void consume(TickDto tick) {
         try {
+            // Enrich with symbol if missing — happens when registry loads after first ticks
+            if (tick.getTradingSymbol() == null && instrumentRegistry.isLoaded()) {
+                tick.setTradingSymbol(instrumentRegistry.getSymbol(tick.getInstrumentToken()));
+                tick.setExchange(instrumentRegistry.getExchange(tick.getInstrumentToken()));
+            }
+            // Skip if still null — registry not loaded yet
+            if (tick.getTradingSymbol() == null) {
+                return;
+            }
+
             // Build candles for all three intervals from this one tick
             candleBuilderService.processTick(tick, Interval.MINUTE_1);
             candleBuilderService.processTick(tick, Interval.MINUTE_5);

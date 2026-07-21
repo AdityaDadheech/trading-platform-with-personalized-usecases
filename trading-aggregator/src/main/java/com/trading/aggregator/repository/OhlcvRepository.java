@@ -163,6 +163,8 @@ public class OhlcvRepository {
             String interval,
             int limit
     ) {
+        // Use TimescaleDB's time_bucket_gapfill or just direct DESC query
+        // without the outer re-sort — chart will reverse in Java which is O(n) not O(n log n)
         String sql = """
         SELECT instrument_token, trading_symbol, exchange, interval,
                bucket_time, open, high, low, close, volume, open_interest
@@ -192,7 +194,7 @@ public class OhlcvRepository {
                 limit
         );
 
-        // Reverse so oldest → newest (chart expects this order)
+        // Reverse in Java — O(n) in memory, much faster than DB sort
         java.util.Collections.reverse(candles);
         return candles;
     }

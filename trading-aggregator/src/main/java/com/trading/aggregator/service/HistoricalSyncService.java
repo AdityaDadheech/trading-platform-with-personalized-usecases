@@ -151,4 +151,63 @@ public class HistoricalSyncService {
             total, tokens.size());
         return total;
     }
+
+    /**
+     * Syncs full historical data for an instrument by splitting into
+     * 60-day chunks (Kite API limit for minute data).
+     *
+     * @param instrumentToken  instrument to sync
+     * @param interval         candle interval
+     * @param totalDays        how many days back to fetch (e.g. 365 for 1 year)
+     * @return total candles saved
+     */
+    public int syncFullHistory(long instrumentToken, Interval interval, int totalDays) {
+        String symbol = instrumentRegistry.getSymbol(instrumentToken);
+        if (symbol == null) {
+            throw new IllegalArgumentException("Unknown token: " + instrumentToken);
+        }
+
+        log.info("Starting full history sync for {} | interval={} | {} days",
+                symbol, interval.getKiteValue(), totalDays);
+
+        // Chunk size: 58 days (stay safely under 60-day limit)
+        int chunkDays = interval == Interval.DAY ? 365 : 58;
+        int totalSaved = 0;
+
+        LocalDate endDate = LocalDate.now();
+        LocalDate startDate = endDate.minusDays(totalDays);
+        LocalDate chunkEnd = endDate;
+
+        while (chunkEnd.isAfter(startDate)) {
+            LocalDate chunkStart = chunkEnd.minusDays(chunkDays);
+            if (chunkStart.isBefore(startDate)) {
+                chunkStart = startDate;
+            }
+
+            try {
+                log.info("Syncing chunk: {} → {} for {}",
+                        chunkStart, chunkEnd, symbol);
+
+                int saved = sync(instrumentToken, interval, chunkStart, chunkEnd);
+                totalSaved += saved;
+
+                // Respect Kite rate limit
+                Thread.sleep(500);
+
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.warn("Full history sync interrupted after {} candles", totalSaved);
+                break;
+            } catch (Exception e) {
+                log.error("Chunk sync failed for {} ({} → {}): {}",
+                        symbol, chunkStart, chunkEnd, e.getMessage());
+                // Continue with next chunk even if one fails
+            }
+
+            chunkEnd = chunkEnd.minusDays(chunkDays + 1);
+        }
+
+        log.info("Full history sync complete for {} — {} total candles", symbol, totalSaved);
+        return totalSaved;
+    }
 }

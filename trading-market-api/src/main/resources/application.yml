@@ -62,6 +62,10 @@ server:
   port: 8080
   servlet:
     context-path: /
+  compression:
+    enabled: true
+    mime-types: application/json
+    min-response-size: 10240
 
 # ── Kite Connect ─────────────────────────────────────────────────
 # Real values come from application-dev.yml (gitignored)

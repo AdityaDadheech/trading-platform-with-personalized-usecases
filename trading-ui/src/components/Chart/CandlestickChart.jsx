@@ -74,23 +74,69 @@ export function CandlestickChart({ candles, loading, error, symbol, onNewTick, i
   // Update chart data when candles change
   useEffect(() => {
     if (!seriesRef.current || !candles.length) return
+    liveCandle.current = null // reset live candle when new historical candles arrive
     seriesRef.current.setData(candles)
     chartRef.current.timeScale().fitContent()
     chartRef.current.priceScale('right').applyOptions({ autoScale: true })
   }, [candles])
 
   // Expose a way for parent to push live ticks
+  // Track current live candle state in memory
+  const liveCandle = useRef(null)
+
   useEffect(() => {
     if (onNewTick) {
-      onNewTick.current = (tick) => {
+      onNewTick.current = (tick, currentInterval) => {
         if (!seriesRef.current) return
-        seriesRef.current.update({
-          time: Math.floor(Date.now() / 1000),
-          open:  tick.openPrice,
-          high:  tick.highPrice,
-          low:   tick.lowPrice,
-          close: tick.lastPrice,
-        })
+
+        const price = tick.lastPrice
+        if (!price || isNaN(price)) return
+
+        // Calculate bucket time based on current interval
+        const nowUtcSeconds = Math.floor(Date.now() / 1000)
+        const nowIstSeconds = nowUtcSeconds + 19800  // IST = UTC + 5:30
+
+        let bucketIst
+        switch (currentInterval) {
+          case 'minute':
+            bucketIst = nowIstSeconds - (nowIstSeconds % 60)
+            break
+          case '5minute':
+            bucketIst = nowIstSeconds - (nowIstSeconds % (5 * 60))
+            break
+          case '15minute':
+            bucketIst = nowIstSeconds - (nowIstSeconds % (15 * 60))
+            break
+          case 'day':
+            // Floor to market open of the current day (09:15 IST)
+            const dayStart = nowIstSeconds - (nowIstSeconds % 86400)
+            const marketOpen = dayStart + (9 * 3600 + 15 * 60)  // 09:15 IST
+            bucketIst = marketOpen
+            break
+          default:
+            bucketIst = nowIstSeconds - (nowIstSeconds % 60)
+        }
+
+        const bucketUtc = bucketIst - 19800
+
+        if (!liveCandle.current || liveCandle.current.time !== bucketUtc) {
+          liveCandle.current = {
+            time:  bucketUtc,
+            open:  price,
+            high:  price,
+            low:   price,
+            close: price,
+          }
+        } else {
+          liveCandle.current = {
+            ...liveCandle.current,
+            high:  Math.max(liveCandle.current.high, price),
+            low:   Math.min(liveCandle.current.low, price),
+            close: price,
+          }
+        }
+
+        seriesRef.current.update(liveCandle.current)
       }
     }
   }, [onNewTick])

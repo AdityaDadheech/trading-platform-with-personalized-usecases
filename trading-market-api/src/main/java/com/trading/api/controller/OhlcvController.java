@@ -43,7 +43,7 @@ public class OhlcvController {
      * sorted oldest → newest.
      */
     @GetMapping("/{instrumentToken}")
-    public ResponseEntity<ApiResponse<List<OhlcvDto>>> getLatestCandles(
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getLatestCandles(
         @PathVariable long instrumentToken,
         @RequestParam(defaultValue = "minute") String interval,
         @RequestParam(defaultValue = "500") int limit
@@ -58,7 +58,21 @@ public class OhlcvController {
             instrumentToken, interval, cappedLimit
         );
 
-        return ResponseEntity.ok(ApiResponse.ok(candles));
+        // Send only what the chart needs — reduces JSON size by 70%
+        List<Map<String, Object>> lightweight = candles.stream()
+                .map(c -> Map.<String, Object>of(
+                        "t", c.getBucketTime().getEpochSecond(),  // time as epoch seconds
+                        "o", c.getOpen(),
+                        "h", c.getHigh(),
+                        "l", c.getLow(),
+                        "c", c.getClose(),
+                        "v", c.getVolume()
+                ))
+                .toList();
+
+        return ResponseEntity.ok(ApiResponse.ok(lightweight));
+
+//        return ResponseEntity.ok(ApiResponse.ok(candles));
     }
 
     /**

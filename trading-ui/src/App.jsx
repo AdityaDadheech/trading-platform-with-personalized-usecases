@@ -76,10 +76,10 @@ export default function App() {
 
       // Push live update to chart (updates the current candle)
       if (pushTickToChart.current) {
-        pushTickToChart.current(tick)
+        pushTickToChart.current(tick, interval)
       }
     }
-  }, [selectedToken])
+  }, [selectedToken, interval])
 
   // WebSocket connection
   const { connected, subscribe } = useTickWebSocket(handleTick)

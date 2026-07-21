@@ -3,10 +3,10 @@ import { fetchCandles } from '../services/api'
 
 // Smart limits per interval — how many candles makes sense to show
 const INTERVAL_LIMITS = {
-  'minute':    3750,   // one full trading day (375 mins of NSE)
-  '5minute':   500,   // ~13 days
-  '15minute':  500,   // ~40 days
-  'day':       365,   // one full year
+  'minute':    3000,   // one full trading day (375 mins of NSE)
+  '5minute':   1500,   // ~13 days
+  '15minute':  1500,   // ~40 days
+  'day':       2400,   // one full year
 }
 
 export function useOhlcv(instrumentToken, interval = 'minute') {
@@ -31,12 +31,12 @@ export function useOhlcv(instrumentToken, interval = 'minute') {
         }
 
         const formatted = data.map(c => ({
-          time: Math.floor(new Date(c.bucketTime).getTime() / 1000),
-          open:  parseFloat(c.open),
-          high:  parseFloat(c.high),
-          low:   parseFloat(c.low),
-          close: parseFloat(c.close),
-          value: c.volume
+          time:  c.t,
+          open:  parseFloat(c.o),
+          high:  parseFloat(c.h),
+          low:   parseFloat(c.l),
+          close: parseFloat(c.c),
+          value: c.v
         }))
         setCandles(formatted)
       })

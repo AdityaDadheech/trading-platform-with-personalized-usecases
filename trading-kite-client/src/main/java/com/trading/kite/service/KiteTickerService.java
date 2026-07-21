@@ -66,10 +66,13 @@ public class KiteTickerService {
         }
 
         log.info("Initialising KiteTicker WebSocket...");
-        kiteTicker = new KiteTicker(
-            kiteProperties.getAccessToken(),
-            kiteProperties.getApiKey()
-        );
+        String accessToken = kiteConnect.getAccessToken();
+        if (accessToken == null || accessToken.isBlank()) {
+            throw new IllegalStateException(
+                    "No access token on KiteConnect bean. Complete login at: GET /api/v1/auth/login"
+            );
+        }
+        kiteTicker = new KiteTicker(accessToken, kiteProperties.getApiKey());
 
         // Wire up all SDK callbacks
         kiteTicker.setOnConnectedListener(this::handleConnected);

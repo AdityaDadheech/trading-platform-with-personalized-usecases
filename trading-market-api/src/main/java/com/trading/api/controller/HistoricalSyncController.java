@@ -118,4 +118,37 @@ public class HistoricalSyncController {
             "totalCandlesSaved", total
         )));
     }
+
+    /**
+     * Sync full historical data for an instrument.
+     * Automatically chunks requests to respect Kite's 60-day limit.
+     *
+     * POST /api/v1/historical/sync/256265/full?interval=minute&days=365
+     *
+     * Recommended:
+     *   Minute data: days=90  (3 months — enough for intraday analysis)
+     *   Day data:    days=730 (2 years — enough for swing/positional)
+     *
+     * This runs synchronously — takes 30-60 seconds for 1 year of minute data.
+     * Don't close the browser tab while it runs.
+     */
+    @PostMapping("/sync/{instrumentToken}/full")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> syncFullHistory(
+            @PathVariable long instrumentToken,
+            @RequestParam(defaultValue = "day") String interval,
+            @RequestParam(defaultValue = "365") int days
+    ) {
+        log.info("Full history sync triggered for token={} interval={} days={}",
+                instrumentToken, interval, days);
+
+        Interval iv = Interval.fromKiteValue(interval);
+        int total = historicalSyncService.syncFullHistory(instrumentToken, iv, days);
+
+        return ResponseEntity.ok(ApiResponse.ok(Map.of(
+                "instrumentToken", instrumentToken,
+                "interval", interval,
+                "daysRequested", days,
+                "totalCandlesSaved", total
+        )));
+    }
 }

@@ -186,6 +186,11 @@ public class CandleBuilderService {
      * After this call the candle is persisted and removed from memory.
      */
     private void closeCandle(OhlcvDto candle) {
+        if (candle.getTradingSymbol() == null) {
+            log.warn("Skipping candle for token {} — tradingSymbol is null (registry not loaded yet)",
+                    candle.getInstrumentToken());
+            return;
+        }
         try {
             ohlcvRepository.save(candle);
             log.debug("Candle closed → {} {} {} O:{} H:{} L:{} C:{} V:{}",
